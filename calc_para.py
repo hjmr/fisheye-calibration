@@ -7,13 +7,15 @@ import cv2
 
 
 def parse_arg():
-    parser = argparse.ArgumentParser(description='Calc calibration parameters from chess-board images.')
+    parser = argparse.ArgumentParser(description='Calc calibration parameters from chess-board or circles-gird images.')
     parser.add_argument('-s', '--size', type=float, default=18.5, help='the size of a grid in mm.')
     parser.add_argument('-x', '--x_num', type=int, default=9, help='the horizontal number of grids.')
     parser.add_argument('-y', '--y_num', type=int, default=9, help='the vertical number of grids.')
     parser.add_argument('-p', '--parameter_file', type=str, default='param.pickle',
                         help='the outout file name for the parameters.')
-    parser.add_argument('chess_images', type=str, nargs='+', help='a list of chess-board images.')
+    parser.add_argument('-c', '--use_circle_grid', action='store_true',
+                        help='use circles-grid images instead of chess-board images.')
+    parser.add_argument('ref_images', type=str, nargs='+', help='a list of chess-board or circles-grid images.')
     return parser.parse_args()
 
 
@@ -24,12 +26,30 @@ def prepare_a_matrix_of_pattern_points(grid_size, grid_intersection_size):
     return pattern_points
 
 
-def read_chess_images(chess_images, grid_intersection_size):
+def read_circle_grid_images(ref_images, grid_intersection_size):
     image_shape = None
     image_points = []
-    for chess_image in chess_images:
+    for circle_grid_image in ref_images:
+        print(circle_grid_image)
+        image = cv2.imread(circle_grid_image, cv2.IMREAD_GRAYSCALE)
+        if image_shape is None:
+            image_shape = (image.shape[1], image.shape[0])
+        found, corner = cv2.findCirclesGrid(image, grid_intersection_size,
+                                            flags=cv2.CALIB_CB_SYMMETRIC_GRID+cv2.CALIB_CB_CLUSTERING)
+        if found:
+            print("findCirclesGrid: Success.")
+            image_points.append(corner)
+        else:
+            print("findCirclesGrid: Failure.")
+    return image_shape, image_points
+
+
+def read_chess_images(ref_images, grid_intersection_size):
+    image_shape = None
+    image_points = []
+    for chess_image in ref_images:
         print(chess_image)
-        image = cv2.imread(chess_image)
+        image = cv2.imread(chess_image, cv2.IMREAD_GRAYSCALE)
         if image_shape is None:
             image_shape = (image.shape[1], image.shape[0])
         found, corner = cv2.findChessboardCorners(image, grid_intersection_size)
@@ -63,7 +83,10 @@ def main():
     args = parse_arg()
 
     grid_intersection_size = (args.x_num, args.y_num)
-    image_shape, image_points = read_chess_images(args.chess_images, grid_intersection_size)
+    if args.use_circle_grid:
+        image_shape, image_points = read_circle_grid_images(args.ref_images, grid_intersection_size)
+    else:
+        image_shape, image_points = read_chess_images(args.ref_images, grid_intersection_size)
     if 0 < len(image_points):
         rms, K, d, r, t = calc_parameters(args.size, grid_intersection_size, image_points, image_shape)
         err = evaluate_parameters(K, d, r, t, args.size, grid_intersection_size, image_points)
@@ -76,7 +99,7 @@ def main():
         with open(args.parameter_file, 'wb') as f:
             pickle.dump(parameters, f)
     else:
-        print("findChessboardCorners() not be successful once")
+        print('Even one grid could not be found.')
 
 
 if __name__ == '__main__':
