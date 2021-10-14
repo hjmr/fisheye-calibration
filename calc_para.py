@@ -87,6 +87,7 @@ def main():
         image_shape, image_points = read_circle_grid_images(args.ref_images, grid_intersection_size)
     else:
         image_shape, image_points = read_chess_images(args.ref_images, grid_intersection_size)
+
     if 0 < len(image_points):
         rms, K, d, r, t = calc_parameters(args.size, grid_intersection_size, image_points, image_shape)
         err = evaluate_parameters(K, d, r, t, args.size, grid_intersection_size, image_points)
