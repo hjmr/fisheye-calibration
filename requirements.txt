@@ -1,2 +1,2 @@
-numpy==1.21.1; python_version >= "3.7" and python_full_version >= "3.5.0"
-opencv-python==4.5.3.56; python_version >= "3.6"
+numpy==1.22.4 ; python_version < "4.0" and python_version >= "3.9"
+opencv-python==4.6.0.66 ; python_version >= "3.9" and python_version < "4.0"
