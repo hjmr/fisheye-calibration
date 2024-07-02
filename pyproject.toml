@@ -6,9 +6,9 @@ authors = ["hjmr <2620990+hjmr@users.noreply.github.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-numpy = "^1.22.4"
-opencv-python = "^4.6.0.66"
+python = "^3.11"
+numpy = "*"
+opencv-python = "*"
 
 
 [build-system]
